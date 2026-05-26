@@ -1,65 +1,220 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GehuConnect - Attendance</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
-        .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #2980b9; color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border: 1px solid #ddd; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .ok { color: green; font-weight: bold; }
-        .warn { color: red; font-weight: bold; }
-        .back { display: inline-block; margin-top: 15px; padding: 8px 14px; background: #7f8c8d; color: white; text-decoration: none; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance — GEHU Connect</title>
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    /* ── Attendance summary bar ── */
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 26px;
+      align-items: stretch;
+    }
+    .sum-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-md);
+      padding: 16px 18px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .sum-card .num { font-size: 1.9rem; font-weight: 800; line-height: 1.2; }
+    .sum-card .lbl { font-size: 0.73rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-top: 5px; line-height: 1.4; }
+    .sum-card.ok     .num { color: var(--success); }
+    .sum-card.warn   .num { color: var(--warning); }
+    .sum-card.danger .num { color: var(--danger); }
+
+    /* ── Subject card ── */
+    .subject-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      padding: 20px 22px;
+      margin-bottom: 12px;
+      transition: var(--t);
+      animation: fadeUp 0.4s ease both;
+      box-shadow: var(--shadow-sm);
+    }
+    .subject-card:hover { background: var(--glass-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .subject-card.low-att {
+      border-left: 3px solid var(--danger);
+    }
+
+    .subj-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 12px;
+    }
+    .subj-name { font-size: 1rem; font-weight: 700; flex: 1; min-width: 0; }
+    .subj-pct  { font-size: 1.45rem; font-weight: 800; flex-shrink: 0; }
+    .subj-pct.ok      { color: var(--success); }
+    .subj-pct.warning { color: var(--warning); }
+    .subj-pct.danger  { color: var(--danger); }
+
+    /* ── Predictor box ── */
+    .predictor-box {
+      margin-top: 10px;
+      padding: 9px 13px;
+      border-radius: var(--r-sm);
+      font-size: 0.84rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .predictor-box.safe {
+      background: rgba(46,213,115,0.08);
+      border: 1px solid rgba(46,213,115,0.2);
+      color: var(--success);
+    }
+    .predictor-box.need {
+      background: rgba(255,71,87,0.08);
+      border: 1px solid rgba(255,71,87,0.2);
+      color: var(--danger);
+    }
+    .predictor-box.border {
+      background: rgba(255,165,2,0.08);
+      border: 1px solid rgba(255,165,2,0.2);
+      color: var(--warning);
+    }
+
+    /* ── Empty / loading ── */
+    .loading-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .summary-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Attendance Report</h2>
-        <p id="status" style="color:#777;">Loading...</p>
 
-        <table id="att-table" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Attendance %</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="att-body"></tbody>
-        </table>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="student_dashboard.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">GEHU<span class="logo-accent">Connect</span></span>
+        </a>
+      </div>
+      <div class="header-right">
+        <div class="student-badge">
+          <span id="headerName">—</span>
+          <span class="roll-pill" id="headerRoll">—</span>
+        </div>
+        <a href="student_dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+      </div>
+    </div>
+  </header>
 
-        <a href="student_dashboard.html" class="back">← Back to Dashboard</a>
+  <main class="page-wrap">
+    <div class="page-header">
+      <div class="page-title">📊 Attendance Report</div>
+      <div class="page-subtitle">Subject-wise attendance · Merge Sort (ascending) · 40 classes/semester assumed</div>
     </div>
 
-    <script>
-        var student = JSON.parse(sessionStorage.getItem("student"));
-        if (!student) { window.location.href = "index.html"; }
+    <!-- Summary bar -->
+    <div class="summary-row" id="summaryRow" style="display:none;">
+      <div class="sum-card ok">    <div class="num" id="sumOk">—</div>   <div class="lbl">✅ Safe (≥75%)</div></div>
+      <div class="sum-card warn">  <div class="num" id="sumWarn">—</div> <div class="lbl">⚠️ At Risk (60–74%)</div></div>
+      <div class="sum-card danger"><div class="num" id="sumDanger">—</div><div class="lbl">🚨 Critical (&lt;60%)</div></div>
+    </div>
 
-        document.getElementById("status").innerText = "Loading attendance for " + student.name + "...";
+    <!-- Subjects -->
+    <div id="subjectList">
+      <div class="loading-msg">
+        <div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px;display:block;"></div>
+        Loading attendance data…
+      </div>
+    </div>
 
-        fetch("http://localhost:5000/attendance?id=" + student.id)
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                document.getElementById("status").style.display = "none";
-                document.getElementById("att-table").style.display = "table";
+  </main>
 
-                var tbody = document.getElementById("att-body");
-                tbody.innerHTML = "";
+  <footer class="footer">
+    © 2026 GEHU Connect · DSA: Merge Sort (Mohit Chandra Purohit — 2419260)
+  </footer>
 
-                for (var i = 0; i < data.length; i++) {
-                    var row = data[i];
-                    var statusText = row.warning ? "<span class='warn'>⚠ WARNING</span>" : "<span class='ok'>✔ OK</span>";
-                    var tr = document.createElement("tr");
-                    tr.innerHTML = "<td>" + row.subject + "</td><td>" + row.percentage + "%</td><td>" + statusText + "</td>";
-                    tbody.appendChild(tr);
-                }
-            })
-            .catch(function() {
-                document.getElementById("status").innerText = "Failed to load attendance data.";
-            });
-    </script>
+  <script>
+    const student = JSON.parse(sessionStorage.getItem('student'));
+    if (!student) { window.location.href = 'index.html'; }
+    else {
+      document.getElementById('headerName').textContent = student.name;
+      document.getElementById('headerRoll').textContent = student.id;
+    }
+
+    fetch(`http://localhost:5000/attendance?id=${student.id}`)
+      .then(r => r.json())
+      .then(data => {
+        const list = document.getElementById('subjectList');
+        list.innerHTML = '';
+
+        if (!Array.isArray(data) || data.length === 0) {
+          list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">No attendance data found.</p>';
+          return;
+        }
+
+        // Summary counts
+        let ok = 0, warn = 0, crit = 0;
+        data.forEach(s => {
+          if (s.percentage >= 75) ok++;
+          else if (s.percentage >= 60) warn++;
+          else crit++;
+        });
+        document.getElementById('sumOk').textContent     = ok;
+        document.getElementById('sumWarn').textContent   = warn;
+        document.getElementById('sumDanger').textContent = crit;
+        document.getElementById('summaryRow').style.display = 'grid';
+
+        // Render cards
+        data.forEach((s, i) => {
+          const pct  = parseFloat(s.percentage);
+          const lvl  = pct >= 75 ? 'ok' : pct >= 60 ? 'warning' : 'danger';
+          const fill = pct >= 75 ? 'success' : pct >= 60 ? 'warning' : 'danger';
+          const cn   = parseInt(s.classes_needed) || 0;
+          const cm   = parseInt(s.can_miss)       || 0;
+
+          // Predictor text
+          let predHtml = '';
+          if (pct >= 75) {
+            predHtml = `<div class="predictor-box safe">✅ You can miss <strong>${cm}</strong> more class${cm !== 1 ? 'es' : ''} and still stay above 75%</div>`;
+          } else if (cn > 0) {
+            predHtml = `<div class="predictor-box need">🚨 Need to attend <strong>${cn}</strong> consecutive classes to reach 75%</div>`;
+          } else {
+            predHtml = `<div class="predictor-box border">⚠️ You are right at the 75% boundary — don't miss any more!</div>`;
+          }
+
+          const card = document.createElement('div');
+          card.className = `subject-card${s.warning ? ' low-att' : ''}`;
+          card.style.animationDelay = `${i * 0.06}s`;
+          card.innerHTML = `
+            <div class="subj-row-top">
+              <div class="subj-name">${s.warning ? '⚠️ ' : ''}${s.subject}</div>
+              <div class="subj-pct ${lvl}">${pct.toFixed(1)}%</div>
+            </div>
+            <div class="progress-bg">
+              <div class="progress-fill ${fill}" style="width:${Math.min(pct,100)}%"></div>
+            </div>
+            ${predHtml}
+          `;
+          list.appendChild(card);
+        });
+      })
+      .catch(() => {
+        document.getElementById('subjectList').innerHTML =
+          '<p style="color:var(--danger);text-align:center;padding:40px;">⚠️ Failed to load attendance. Is the server running?</p>';
+      });
+  </script>
+
 </body>
 </html>

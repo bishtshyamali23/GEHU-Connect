@@ -1,68 +1,280 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clubs — GEHU Connect</title>
-    <link rel="stylesheet" href="../CSS/notices.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clubs & Societies — GEHU Connect</title>
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    /* ── Search ── */
+    .search-wrap { position: relative; margin-bottom: 20px; }
+    .search-wrap .form-input { padding-left: 42px; }
+    .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
+
+    /* ── Clubs grid ── */
+    .clubs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    /* ── Club card ── */
+    .club-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      padding: 22px;
+      transition: var(--t);
+      animation: fadeUp 0.4s ease both;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .club-card:hover { background: var(--glass-hover); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .club-card.is-full { opacity: 0.62; }
+
+    .club-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .club-name { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
+    .club-cat  { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-top: 3px; }
+
+    .club-desc { font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; }
+
+    .club-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .club-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Seats bar ── */
+    .seats-row { display: flex; align-items: center; gap: 10px; }
+    .seats-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .seats-bar-fill { height: 100%; border-radius: 10px; transition: width 0.8s; }
+    .seats-bar-fill.open     { background: linear-gradient(90deg,#2ed573,#7bed9f); }
+    .seats-bar-fill.limited  { background: linear-gradient(90deg,#ffa502,#ffbe57); }
+    .seats-bar-fill.full     { background: linear-gradient(90deg,#ff4757,#ff6b81); }
+    .seats-text { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Apply btn row ── */
+    .club-actions {
+      margin-top: auto;
+      padding-top: 4px;
+    }
+
+    /* ── Apply Modal ── */
+    .modal-club-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .modal-club-info { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px; }
+
+    @media (max-width: 640px) {
+      .clubs-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-inner">
-            <div class="logo">
-                <a href="student_dashboard.html">← Dashboard</a>
-                <span class="sep">|</span>
-                <h1>GEHU Connect</h1>
-            </div>
-            <div class="student-badge">
-                <span id="studentNameBadge">Loading...</span>
-                <span class="roll-badge" id="rollBadge">—</span>
-            </div>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="student_dashboard.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">GEHU<span class="logo-accent">Connect</span></span>
+        </a>
+      </div>
+      <div class="header-right">
+        <div class="student-badge">
+          <span id="headerName">—</span>
+          <span class="roll-pill" id="headerRoll">—</span>
         </div>
-    </header>
+        <a href="student_dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+      </div>
+    </div>
+  </header>
 
-    <div class="page-title">
-        <h2>🎭 Clubs &amp; Societies</h2>
-        <p class="subtitle">Browse active clubs · check vacancies · apply to join</p>
+  <main class="page-wrap">
+    <div class="page-header">
+      <div class="page-title">🎭 Clubs & Societies</div>
+      <div class="page-subtitle">Browse active clubs · Check vacancies · Apply to join</div>
     </div>
 
-    <div class="main-container">
-
-        <div class="search-wrap" style="margin-bottom:20px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="Search clubs…" autocomplete="off">
-        </div>
-
-        <div class="category-pills">
-            <button class="pill active" data-filter="all">All Clubs</button>
-            <button class="pill" data-filter="open">🟢 Open Spots</button>
-            <button class="pill" data-filter="limited">🟡 Limited Spots</button>
-            <button class="pill" data-filter="full">🔴 Full</button>
-        </div>
-
-        <div class="clubs-grid" id="clubsGrid"></div>
-
+    <!-- Search -->
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="form-input"
+             placeholder="Search clubs by name or category…" oninput="applyFilter()" />
     </div>
 
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-box">
-            <div class="modal-top">
-                <div class="modal-title" id="modalTitle">Apply to Club</div>
-                <button class="modal-close" id="modalClose">✕</button>
-            </div>
-            <div class="modal-body" id="modalBody"></div>
-            <div style="margin-top:16px;display:flex;gap:10px;">
-                <button id="confirmApply" style="flex:1;padding:9px;background:linear-gradient(135deg,#6c63ff,#00d4ff);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:inherit;">✅ Confirm Application</button>
-                <button id="cancelApply" style="flex:1;padding:9px;background:#20243a;color:#e2e8f0;border:1px solid #2d3352;border-radius:8px;font-size:.9rem;cursor:pointer;font-family:inherit;">Cancel</button>
-            </div>
-        </div>
+    <!-- Status filter pills -->
+    <div class="pills" id="statusPills">
+      <button class="pill active" data-status="all"     onclick="setStatus(this)">All Clubs</button>
+      <button class="pill"        data-status="open"    onclick="setStatus(this)">🟢 Open Spots</button>
+      <button class="pill"        data-status="limited" onclick="setStatus(this)">🟡 Limited</button>
+      <button class="pill"        data-status="full"    onclick="setStatus(this)">🔴 Full</button>
     </div>
 
-    <footer class="footer">
-        © 2026 GEHU Connect | Module: Shyamali — Notices &amp; Clubs
-    </footer>
+    <div class="clubs-grid" id="clubsGrid">
+      <div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">
+        <div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px;display:block;"></div>
+        Loading clubs…
+      </div>
+    </div>
+  </main>
 
-    <script src="../JavaScript/clubs.js"></script>
+  <!-- Apply Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Apply to Club</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-club-name" id="modalClubName">—</div>
+      <div class="modal-club-info" id="modalClubInfo">—</div>
+      <div class="form-group">
+        <label class="form-label">Why do you want to join?</label>
+        <textarea id="applyReason" class="form-textarea" placeholder="Briefly describe your interest and what you'd contribute…"></textarea>
+      </div>
+      <div id="modalMsg" class="toast"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmApply()">✅ Submit Application</button>
+        <button class="btn btn-ghost"   style="flex:1;" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2026 GEHU Connect · Module: Shyamali — Notices & Clubs
+  </footer>
+
+  <script>
+    const student = JSON.parse(sessionStorage.getItem('student'));
+    if (!student) { window.location.href = 'index.html'; }
+    else {
+      document.getElementById('headerName').textContent = student.name;
+      document.getElementById('headerRoll').textContent = student.id;
+    }
+
+    let allClubs    = [];
+    let currentSt   = 'all';
+    let selectedClub = null;
+
+    fetch('http://localhost:5000/clubs')
+      .then(r => r.json())
+      .then(data => {
+        allClubs = Array.isArray(data) ? data : [];
+        renderClubs(allClubs);
+      })
+      .catch(() => {
+        document.getElementById('clubsGrid').innerHTML =
+          '<p style="color:var(--danger);text-align:center;padding:40px;grid-column:1/-1;">⚠️ Failed to load clubs.</p>';
+      });
+
+    function setStatus(el) {
+      document.querySelectorAll('#statusPills .pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      currentSt = el.dataset.status;
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      let list = allClubs;
+      if (currentSt !== 'all') list = list.filter(c => c.status === currentSt);
+      if (q) list = list.filter(c =>
+        c.name.toLowerCase().includes(q) || c.category.toLowerCase().includes(q)
+      );
+      renderClubs(list);
+    }
+
+    function renderClubs(list) {
+      const grid = document.getElementById('clubsGrid');
+      grid.innerHTML = '';
+      if (!list || list.length === 0) {
+        grid.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);grid-column:1/-1;">📭 No clubs found.</div>';
+        return;
+      }
+
+      const statusLabel = { open: '🟢 Open', limited: '🟡 Limited', full: '🔴 Full' };
+      const statusBadge = { open: 'success', limited: 'warning', full: 'danger' };
+      const catEmoji    = { Technical:'⚙️', Creative:'🎨', Social:'🤝', Cultural:'🎵', Sports:'🏆' };
+
+      list.forEach((c, i) => {
+        const isFull = c.status === 'full';
+        const pct    = Math.min(100, Math.round((c.enrolled / c.capacity) * 100));
+        const card   = document.createElement('div');
+        card.className = `club-card${isFull ? ' is-full' : ''}`;
+        card.style.animationDelay = `${i * 0.07}s`;
+        card.innerHTML = `
+          <div class="club-top">
+            <div>
+              <div class="club-name">${catEmoji[c.category] || '🎭'} ${c.name}</div>
+              <div class="club-cat">${c.category}</div>
+            </div>
+            <span class="badge badge-${statusBadge[c.status]}">${statusLabel[c.status]}</span>
+          </div>
+          <div class="club-desc">${c.description}</div>
+          <div class="club-meta">
+            <span>👤 ${c.coordinator}</span>
+            <span>🪑 ${c.spots_left} spots left</span>
+          </div>
+          <div class="seats-row">
+            <div class="seats-bar-bg">
+              <div class="seats-bar-fill ${c.status}" style="width:${pct}%"></div>
+            </div>
+            <div class="seats-text">${c.enrolled}/${c.capacity}</div>
+          </div>
+          <div class="club-actions">
+            <button class="btn btn-primary btn-full btn-sm" ${isFull ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+              onclick="${isFull ? '' : `openApply(${JSON.stringify(c).replace(/"/g, '&quot;')})`}">
+              ${isFull ? '🔴 Club Full' : '✅ Apply to Join'}
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openApply(club) {
+      selectedClub = club;
+      document.getElementById('modalClubName').textContent  = club.name;
+      document.getElementById('modalClubInfo').textContent  = `${club.category} · Coordinator: ${club.coordinator} · ${club.spots_left} spots left`;
+      document.getElementById('applyReason').value = '';
+      document.getElementById('modalMsg').className = 'toast';
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      selectedClub = null;
+    }
+
+    function confirmApply() {
+      const reason = document.getElementById('applyReason').value.trim();
+      const msg    = document.getElementById('modalMsg');
+      if (!reason) {
+        msg.textContent = '⚠️ Please write a short reason for joining.';
+        msg.className   = 'toast show error';
+        return;
+      }
+      // Demo: just show success (no backend club-apply route needed for Phase 3 demo)
+      msg.textContent = `✅ Application submitted for ${selectedClub.name}! Admin will review soon.`;
+      msg.className   = 'toast show success';
+      setTimeout(closeModal, 2200);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    });
+  </script>
+
 </body>
 </html>

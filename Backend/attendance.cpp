@@ -3,14 +3,17 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cmath>
 using namespace std;
 
+// Each subject stores name + percentage (out of 100)
 struct Subject {
     string name;
     float percentage;
 };
 
-void merge(vector<Subject> &arr, int left, int mid, int right) {
+// ── Merge Sort (Mohit — DSA: Merge Sort) ─────────────────────
+void merge(vector<Subject>& arr, int left, int mid, int right) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
     vector<Subject> L(n1), R(n2);
@@ -27,7 +30,7 @@ void merge(vector<Subject> &arr, int left, int mid, int right) {
     while (j < n2) arr[k++] = R[j++];
 }
 
-void mergeSort(vector<Subject> &arr, int left, int right) {
+void mergeSort(vector<Subject>& arr, int left, int right) {
     if (left >= right) return;
     int mid = left + (right - left) / 2;
     mergeSort(arr, left, mid);
@@ -35,12 +38,20 @@ void mergeSort(vector<Subject> &arr, int left, int right) {
     merge(arr, left, mid, right);
 }
 
-// Phase 3 pending feature
+// ── Phase 3: Attendance Predictor ────────────────────────────
+// Calculates how many consecutive classes a student must attend
+// to reach the 75% threshold, assuming TOTAL_CLASSES per semester.
+// Formula derivation:
+//   (attended + x) / (total + x) >= 0.75
+//   attended + x  >= 0.75*total + 0.75*x
+//   0.25*x        >= 0.75*total - attended
+//   x             >= (0.75*total - attended) / 0.25
+const float TOTAL_CLASSES = 40.0f;
+
 int predictClasses(float attended, float total) {
-    // formula: x >= (0.75*total - attended) / 0.25
-    // int x = (int)((0.75 * total - attended) / 0.25);
-    // return x > 0 ? x : 0;   <-- return statement missing for phase 3
-    return 0;
+    float needed = 0.75f * total - attended;
+    if (needed <= 0) return 0;
+    return (int)ceil(needed / 0.25f);
 }
 
 int main(int argc, char* argv[]) {
@@ -66,17 +77,35 @@ int main(int argc, char* argv[]) {
     }
     fin.close();
 
+    // Sort ascending by attendance % using Merge Sort
     if (!subjects.empty()) {
-        mergeSort(subjects, 0, subjects.size() - 1);
+        mergeSort(subjects, 0, (int)subjects.size() - 1);
     }
 
     cout << "[";
     for (int i = 0; i < (int)subjects.size(); i++) {
-        string warning = (subjects[i].percentage < 75.0f) ? "true" : "false";
+        float pct       = subjects[i].percentage;
+        float attended  = pct * TOTAL_CLASSES / 100.0f;
+        bool  warning   = (pct < 75.0f);
+
+        // Attendance predictor (Phase 3)
+        int classes_needed = 0;
+        int can_miss       = 0;
+        if (warning) {
+            classes_needed = predictClasses(attended, TOTAL_CLASSES);
+        } else {
+            // How many more classes can they afford to skip?
+            // (attended - x) / TOTAL >= 0.75  =>  x <= attended - 0.75*TOTAL
+            int cm = (int)floor(attended - 0.75f * TOTAL_CLASSES);
+            can_miss = (cm > 0) ? cm : 0;
+        }
+
         cout << "{"
-             << "\"subject\":\"" << subjects[i].name << "\","
-             << "\"percentage\":" << subjects[i].percentage << ","
-             << "\"warning\":" << warning
+             << "\"subject\":\""    << subjects[i].name << "\","
+             << "\"percentage\":"   << pct              << ","
+             << "\"warning\":"      << (warning ? "true" : "false") << ","
+             << "\"classes_needed\":" << classes_needed << ","
+             << "\"can_miss\":"     << can_miss
              << "}";
         if (i < (int)subjects.size() - 1) cout << ",";
     }
@@ -84,10 +113,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
-// ==========================================
-// PHASE 3 PENDING:
-// 1. predictClasses() is declared with the formula but return logic is missing.
-//    Once complete, this will predict how many extra classes a student needs
-//    to reach 75% attendance.
-// ==========================================

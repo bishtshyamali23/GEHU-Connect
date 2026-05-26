@@ -1,55 +1,236 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GehuConnect - Login</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        h2 { color: #2c3e50; margin-bottom: 20px; }
-        input { width: 90%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        button { width: 100%; padding: 10px; background: #2980b9; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #1a6298; }
-        #error-msg { color: red; margin-top: 10px; font-size: 13px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GEHU Connect — Student Login</title>
+  <meta name="description" content="Login to GEHU Connect student portal. Access attendance, assignments, notices and clubs." />
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+      animation: fadeUp 0.55s ease both;
+    }
+
+    /* ── Univ branding ── */
+    .univ-brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      font-size: 3.6rem;
+      display: block;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 0 18px rgba(108,99,255,0.5));
+    }
+    .brand-name {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+    }
+    .brand-name span {
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Login card ── */
+    .login-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(108,99,255,0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 22px;
+    }
+    .card-title span { color: var(--text-muted); font-weight: 400; font-size: 0.88rem; display: block; margin-top: 3px; }
+
+    /* ── Error box ── */
+    .err-box {
+      display: none;
+      background: rgba(255,71,87,0.08);
+      border: 1px solid rgba(255,71,87,0.25);
+      border-radius: var(--r-sm);
+      padding: 11px 14px;
+      font-size: 0.86rem;
+      color: var(--danger);
+      margin-top: 14px;
+      animation: fadeUp 0.25s ease;
+    }
+    .err-box.show { display: block; }
+
+    /* ── Divider ── */
+    .or-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin: 18px 0;
+    }
+    .or-row::before, .or-row::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--glass-border);
+    }
+
+    /* ── Admin link ── */
+    .admin-link-row {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .admin-link-row a { color: var(--accent-cyan); text-decoration: none; }
+    .admin-link-row a:hover { text-decoration: underline; }
+
+    /* ── Demo hint ── */
+    .demo-hint {
+      margin-top: 24px;
+      padding: 14px 16px;
+      background: rgba(108,99,255,0.07);
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: var(--r-sm);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .demo-hint strong { color: var(--accent-purple); display: block; margin-bottom: 4px; }
+    .demo-hint code {
+      background: rgba(255,255,255,0.07);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--accent-cyan);
+    }
+
+    /* ── Loading state ── */
+    #loginBtn.loading .btn-text { display: none; }
+    #loginBtn .spinner { display: none; }
+    #loginBtn.loading .spinner { display: inline-block; }
+  </style>
 </head>
 <body>
-    <div class="box">
-        <h2>GEHU Connect</h2>
-        <p style="color:#777; font-size:13px;">Enter your student ID to login</p>
-        <input type="text" id="studentId" placeholder="Student ID (e.g. 2419260)" />
-        <button onclick="doLogin()">Login</button>
-        <p id="error-msg"></p>
+
+  <div class="login-wrapper">
+    <div class="univ-brand">
+      <span class="brand-icon">🎓</span>
+      <div class="brand-name">GEHU<span>Connect</span></div>
+      <div class="brand-sub">Graphic Era Hill University · Student ERP Portal</div>
     </div>
 
-    <script>
-        function doLogin() {
-            var id = document.getElementById("studentId").value.trim();
-            if (id === "") {
-                document.getElementById("error-msg").innerText = "Please enter your student ID.";
-                return;
-            }
+    <div class="card login-card">
+      <div class="card-title">
+        Student Login
+        <span>Enter your roll number to access the portal</span>
+      </div>
 
-            fetch("http://localhost:5000/login?id=" + id)
-                .then(function(res) {
-                    if (!res.ok) throw new Error("not found");
-                    return res.json();
-                })
-                .then(function(data) {
-                    if (data.error) {
-                        document.getElementById("error-msg").innerText = "Student not found.";
-                    } else {
-                        sessionStorage.setItem("student", JSON.stringify(data));
-                        window.location.href = "student_dashboard.html";
-                    }
-                })
-                .catch(function() {
-                    document.getElementById("error-msg").innerText = "❌ Cannot connect to server. Make sure Flask is running: python app.py";
-                });
+      <div class="form-group">
+        <label class="form-label" for="studentId">Roll Number</label>
+        <input type="text" id="studentId" class="form-input"
+               placeholder="e.g. 2419260" autocomplete="off" />
+      </div>
+
+      <div class="form-group" style="margin-bottom:6px;">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" class="form-input"
+               placeholder="Default: your roll number" />
+      </div>
+
+      <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">
+        <span class="spinner"></span>
+        <span class="btn-text">Login to Portal →</span>
+      </button>
+
+      <div class="err-box" id="errBox"></div>
+
+      <div class="or-row">or</div>
+
+      <a href="admission_form.html" class="btn btn-ghost btn-full">
+        📝 New Student? Apply for Admission
+      </a>
+    </div>
+
+    <div class="demo-hint">
+      <strong>🧪 Demo Credentials</strong>
+      Roll: <code>2419260</code> &nbsp;|&nbsp; Password: <code>2419260</code> (same as roll)<br>
+      Other: <code>2418628</code> · <code>2419475</code> · <code>2418996</code>
+    </div>
+
+    <div class="admin-link-row">
+      <a href="admin_login.html">Admin Panel →</a>
+    </div>
+  </div>
+
+  <script>
+    async function doLogin() {
+      const id  = document.getElementById('studentId').value.trim();
+      const pwd = document.getElementById('password').value.trim();
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('errBox');
+
+      err.classList.remove('show');
+      if (!id) { showErr('Please enter your roll number.'); return; }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const url = `http://localhost:5000/login?id=${encodeURIComponent(id)}&password=${encodeURIComponent(pwd || id)}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+
+        if (data.error) {
+          showErr('❌ Invalid roll number or password. Contact admin if you forgot your credentials.');
+        } else {
+          sessionStorage.setItem('student', JSON.stringify(data));
+          window.location.href = 'student_dashboard.html';
         }
+      } catch {
+        showErr('⚠️ Cannot connect to server. Make sure Flask is running: python app.py');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
 
-        document.addEventListener("keyup", function(e) {
-            if (e.key === "Enter") doLogin();
-        });
-    </script>
+    function showErr(msg) {
+      const e = document.getElementById('errBox');
+      e.textContent = msg;
+      e.classList.add('show');
+    }
+
+    document.addEventListener('keyup', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+
 </body>
 </html>

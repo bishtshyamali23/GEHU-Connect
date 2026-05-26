@@ -1,82 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GehuConnect - Notices</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
-        .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; }
-        select { padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        ul { list-style: none; padding: 0; margin-top: 15px; }
-        li { padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; background: #fafafa; }
-        li.urgent { font-weight: bold; border-left: 4px solid red; }
-        .tag { font-size: 11px; background: #2980b9; color: white; padding: 2px 7px; border-radius: 10px; margin-left: 8px; }
-        .tag.urgent { background: red; }
-        .date { font-size: 12px; color: #999; margin-top: 4px; }
-        .back { display: inline-block; margin-top: 15px; padding: 8px 14px; background: #7f8c8d; color: white; text-decoration: none; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notices — GEHU Connect</title>
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    /* ── Notice card ── */
+    .notice-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      padding: 20px 22px;
+      margin-bottom: 12px;
+      transition: var(--t);
+      animation: fadeUp 0.4s ease both;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      box-shadow: var(--shadow-sm);
+    }
+    .notice-card:hover { background: var(--glass-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .notice-card.is-urgent {
+      border-left: 3px solid var(--danger);
+    }
+
+    .notice-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .notice-dot.urgent { background: var(--danger); box-shadow: 0 0 8px rgba(255,71,87,0.6); animation: pulse-ring 2s infinite; }
+    .notice-dot.normal { background: var(--success); }
+
+    .notice-body { flex: 1; min-width: 0; }
+    .notice-title { font-size: 0.98rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .notice-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .notice-date  { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Search box ── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .search-wrap .form-input { padding-left: 42px; }
+    .search-icon {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    /* ── Empty state ── */
+    .empty-notice {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-muted);
+    }
+    .empty-notice span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Notices</h2>
 
-        <label>Filter by category:
-            <select id="cat-filter" onchange="filterNotices()">
-                <option value="all">All</option>
-                <option value="Fee">Fee</option>
-                <option value="Event">Event</option>
-                <option value="Exam">Exam</option>
-                <option value="Academic">Academic</option>
-            </select>
-        </label>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <a href="student_dashboard.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">GEHU<span class="logo-accent">Connect</span></span>
+        </a>
+      </div>
+      <div class="header-right">
+        <div class="student-badge">
+          <span id="headerName">—</span>
+          <span class="roll-pill" id="headerRoll">—</span>
+        </div>
+        <a href="student_dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+      </div>
+    </div>
+  </header>
 
-        <ul id="notice-list">
-            <li>Loading...</li>
-        </ul>
-
-        <a href="student_dashboard.html" class="back">← Back to Dashboard</a>
+  <main class="page-wrap">
+    <div class="page-header">
+      <div class="page-title">📢 Notice Board</div>
+      <div class="page-subtitle">University announcements · Trie search (Shyamali Bisht — 2418996)</div>
     </div>
 
-    <script>
-        var allNotices = [];
+    <!-- Search -->
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="form-input"
+             placeholder="Search notices by title…" oninput="applyFilters()" />
+    </div>
 
-        fetch("http://localhost:5000/notices?category=all")
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                allNotices = data;
-                renderNotices(allNotices);
-            })
-            .catch(function() {
-                document.getElementById("notice-list").innerHTML = "<li>Failed to load notices.</li>";
-            });
+    <!-- Category pills -->
+    <div class="pills" id="catPills">
+      <button class="pill active" data-cat="all"      onclick="setCat(this)">All</button>
+      <button class="pill"        data-cat="Fee"      onclick="setCat(this)">💰 Fee</button>
+      <button class="pill"        data-cat="Event"    onclick="setCat(this)">🎉 Event</button>
+      <button class="pill"        data-cat="Exam"     onclick="setCat(this)">📋 Exam</button>
+      <button class="pill"        data-cat="Academic" onclick="setCat(this)">📚 Academic</button>
+    </div>
 
-        function filterNotices() {
-            var selected = document.getElementById("cat-filter").value;
-            if (selected === "all") {
-                renderNotices(allNotices);
-            } else {
-                var filtered = allNotices.filter(function(n) { return n.category === selected; });
-                renderNotices(filtered);
-            }
-        }
+    <div id="noticeList">
+      <div style="text-align:center;padding:50px;color:var(--text-muted);">
+        <div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px;display:block;"></div>
+        Loading notices…
+      </div>
+    </div>
+  </main>
 
-        function renderNotices(list) {
-            var ul = document.getElementById("notice-list");
-            ul.innerHTML = "";
-            if (list.length === 0) {
-                ul.innerHTML = "<li>No notices in this category.</li>";
-                return;
-            }
-            for (var i = 0; i < list.length; i++) {
-                var n = list[i];
-                var li = document.createElement("li");
-                if (n.urgency === "urgent") li.className = "urgent";
-                li.innerHTML = n.title
-                    + "<span class='tag " + n.urgency + "'>" + n.category + "</span>"
-                    + "<div class='date'>" + n.date + "</div>";
-                ul.appendChild(li);
-            }
-        }
-    </script>
+  <footer class="footer">
+    © 2026 GEHU Connect · DSA: Trie (Shyamali Bisht — 2418996)
+  </footer>
+
+  <script>
+    const student = JSON.parse(sessionStorage.getItem('student'));
+    if (!student) { window.location.href = 'index.html'; }
+    else {
+      document.getElementById('headerName').textContent = student.name;
+      document.getElementById('headerRoll').textContent = student.id;
+    }
+
+    let allNotices   = [];
+    let currentCat   = 'all';
+
+    fetch('http://localhost:5000/notices?category=all')
+      .then(r => r.json())
+      .then(data => {
+        allNotices = Array.isArray(data) ? data : [];
+        renderNotices(allNotices);
+      })
+      .catch(() => {
+        document.getElementById('noticeList').innerHTML =
+          '<p style="color:var(--danger);text-align:center;padding:40px;">⚠️ Failed to load notices.</p>';
+      });
+
+    function setCat(el) {
+      document.querySelectorAll('#catPills .pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      currentCat = el.dataset.cat;
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      let list = allNotices;
+      if (currentCat !== 'all') list = list.filter(n => n.category === currentCat);
+      if (q) list = list.filter(n => n.title.toLowerCase().includes(q));
+      renderNotices(list);
+    }
+
+    function renderNotices(list) {
+      const el = document.getElementById('noticeList');
+      el.innerHTML = '';
+      if (!list || list.length === 0) {
+        el.innerHTML = '<div class="empty-notice"><span>📭</span>No notices found in this category.</div>';
+        return;
+      }
+      // Urgents first
+      const sorted = [...list].sort((a,b) => (b.urgency === 'urgent') - (a.urgency === 'urgent'));
+      sorted.forEach((n, i) => {
+        const isUrgent = n.urgency === 'urgent';
+        const catBadgeClass = {Fee:'warning', Event:'info', Exam:'danger', Academic:'cyan'}[n.category] || 'info';
+        const card = document.createElement('div');
+        card.className = `notice-card${isUrgent ? ' is-urgent' : ''}`;
+        card.style.animationDelay = `${i * 0.06}s`;
+        card.innerHTML = `
+          <div class="notice-dot ${n.urgency}"></div>
+          <div class="notice-body">
+            <div class="notice-title">${n.title}</div>
+            <div class="notice-meta">
+              <span class="badge badge-${catBadgeClass}">${n.category}</span>
+              ${isUrgent ? '<span class="badge badge-danger">Urgent</span>' : ''}
+              <span class="notice-date">📅 ${n.date}</span>
+            </div>
+          </div>
+        `;
+        el.appendChild(card);
+      });
+    }
+  </script>
+
 </body>
 </html>

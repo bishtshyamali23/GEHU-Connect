@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply for Admission — GEHU Connect</title>
+  <meta name="description" content="Submit your admission application to Graphic Era Hill University. Get auto-assigned roll number, section, and login credentials." />
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    body { padding: 0; }
+
+    /* ── Public header (no auth) ── */
+    .pub-header {
+      background: rgba(13,15,26,0.9);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      padding: 0 24px;
+    }
+    .pub-header-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pub-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .pub-logo-icon { font-size:1.5rem; }
+    .pub-logo-text { font-size:1.2rem; font-weight:800; color:var(--text-primary); }
+    .pub-logo-accent { background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* ── Hero ── */
+    .admission-hero {
+      text-align: center;
+      padding: 44px 20px 32px;
+      position: relative;
+      z-index: 1;
+    }
+    .admission-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .admission-hero p { color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem; }
+
+    /* ── Step pills ── */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin: 0 auto 36px;
+      max-width: 560px;
+      position: relative;
+      z-index: 1;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+    .step-num {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 2px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700;
+      color: var(--text-muted);
+      position: relative; z-index: 2;
+    }
+    .step.done .step-num { background: var(--accent-grad); border-color: transparent; color: #fff; }
+    .step-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; text-align: center; }
+
+    /* ── Form wrapper ── */
+    .form-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Section card ── */
+    .form-section-card {
+      margin-bottom: 20px;
+      animation: fadeUp 0.4s ease both;
+    }
+    .form-section-card:nth-child(2) { animation-delay: 0.08s; }
+    .form-section-card:nth-child(3) { animation-delay: 0.16s; }
+
+    .form-section-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Pct input group ── */
+    .pct-input-wrap { position: relative; }
+    .pct-input-wrap .form-input { padding-right: 36px; }
+    .pct-suffix {
+      position: absolute;
+      right: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-weight: 700; font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    /* ── Success screen ── */
+    #successScreen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 560px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.5s ease;
+    }
+    .success-icon { font-size: 4rem; display: block; margin-bottom: 16px; }
+    #successScreen h2 { font-size: 1.8rem; font-weight: 800; color: var(--success); margin-bottom: 10px; }
+    #successScreen p  { color: var(--text-secondary); line-height: 1.7; }
+    .app-id-box {
+      margin: 24px auto;
+      padding: 18px 24px;
+      background: rgba(46,213,115,0.08);
+      border: 1px solid rgba(46,213,115,0.25);
+      border-radius: var(--r-md);
+      text-align: center;
+    }
+    .app-id-box .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+    .app-id-box .value { font-size: 1.8rem; font-weight: 800; color: var(--success); margin-top: 4px; }
+
+    .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .radio-pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: var(--t-fast);
+      user-select: none;
+    }
+    .radio-pill input { display: none; }
+    .radio-pill.selected { background: rgba(108,99,255,0.15); border-color: var(--accent-purple); color: var(--accent-purple); font-weight: 600; }
+    .radio-pill:hover { background: var(--glass-light); }
+  </style>
+</head>
+<body>
+
+  <header class="pub-header">
+    <div class="pub-header-inner">
+      <a href="index.html" class="pub-logo">
+        <span class="pub-logo-icon">🎓</span>
+        <span class="pub-logo-text">GEHU<span class="pub-logo-accent">Connect</span></span>
+      </a>
+      <a href="index.html" class="btn btn-ghost btn-sm">Already enrolled? Login →</a>
+    </div>
+  </header>
+
+  <div class="admission-hero">
+    <h1>📝 Apply for Admission</h1>
+    <p>Graphic Era Hill University, Dehradun · Academic Year 2026–27</p>
+  </div>
+
+  <div class="steps">
+    <div class="step done" id="step1">
+      <div class="step-num">1</div>
+      <div class="step-label">Fill Form</div>
+    </div>
+    <div class="step" id="step2">
+      <div class="step-num">2</div>
+      <div class="step-label">Admin Review</div>
+    </div>
+    <div class="step" id="step3">
+      <div class="step-num">3</div>
+      <div class="step-label">Get Credentials</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-wrap" id="formSection">
+
+    <!-- Personal Info -->
+    <div class="card form-section-card">
+      <div class="form-section-title">👤 Personal Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="fullName">Full Name</label>
+          <input type="text" id="fullName" class="form-input" placeholder="e.g. Rahul Kumar Sharma" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="dob">Date of Birth</label>
+          <input type="date" id="dob" class="form-input" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <div class="radio-group" id="genderGroup">
+          <label class="radio-pill" onclick="selectRadio(this,'genderGroup')">
+            <input type="radio" name="gender" value="Male" /> Male
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this,'genderGroup')">
+            <input type="radio" name="gender" value="Female" /> Female
+          </label>
+          <label class="radio-pill" onclick="selectRadio(this,'genderGroup')">
+            <input type="radio" name="gender" value="Other" /> Other
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number</label>
+          <input type="tel" id="phone" class="form-input" placeholder="10-digit mobile number" maxlength="10" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">Personal Email</label>
+          <input type="email" id="email" class="form-input" placeholder="your@gmail.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="location">City / Location</label>
+        <input type="text" id="location" class="form-input" placeholder="e.g. Dehradun, Uttarakhand" />
+      </div>
+    </div>
+
+    <!-- Academic Info -->
+    <div class="card form-section-card">
+      <div class="form-section-title">📚 Academic Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="tenth">10th Percentage</label>
+          <div class="pct-input-wrap">
+            <input type="number" id="tenth" class="form-input" placeholder="e.g. 85.5" min="0" max="100" step="0.1" />
+            <span class="pct-suffix">%</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="twelfth">12th Percentage</label>
+          <div class="pct-input-wrap">
+            <input type="number" id="twelfth" class="form-input" placeholder="e.g. 78.0" min="0" max="100" step="0.1" />
+            <span class="pct-suffix">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="card form-section-card">
+      <div class="form-section-title">⚙️ Course Preferences</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="branch">Preferred Branch</label>
+          <select id="branch" class="form-select">
+            <option value="">— Select Branch —</option>
+            <option value="CSE">Computer Science Engineering (CSE)</option>
+            <option value="ECE">Electronics & Comm. Engineering (ECE)</option>
+            <option value="ME">Mechanical Engineering (ME)</option>
+            <option value="Civil">Civil Engineering (Civil)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hostel Required?</label>
+          <div class="radio-group" id="hostelGroup">
+            <label class="radio-pill" onclick="selectRadio(this,'hostelGroup')">
+              <input type="radio" name="hostel" value="Yes" /> Yes
+            </label>
+            <label class="radio-pill" onclick="selectRadio(this,'hostelGroup')">
+              <input type="radio" name="hostel" value="No" /> No (Day Scholar)
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="formMsg" class="toast"></div>
+
+    <button class="btn btn-primary btn-full" id="submitBtn" onclick="submitForm()" style="margin-top:8px;">
+      <span id="submitSpinner" class="spinner" style="display:none;"></span>
+      <span id="submitText">Submit Application →</span>
+    </button>
+  </div>
+
+  <!-- Success Screen -->
+  <div id="successScreen">
+    <span class="success-icon">🎉</span>
+    <h2>Application Submitted!</h2>
+    <p>Your application has been received by GEHU Admissions Office.<br>
+       The admin will review and approve your application.<br>
+       <strong>Once approved, your Roll Number and Login credentials will be assigned automatically.</strong>
+    </p>
+    <div class="app-id-box">
+      <div class="label">Your Application Reference ID</div>
+      <div class="value" id="appIdDisplay">#—</div>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:12px;">
+      Keep this reference ID safe. Contact the admissions office if you need a status update.
+    </p>
+    <a href="index.html" class="btn btn-ghost" style="margin-top:24px;">← Back to Login</a>
+  </div>
+
+  <footer class="footer">
+    © 2026 GEHU Connect · Graphic Era Hill University, Dehradun
+  </footer>
+
+  <script>
+    function selectRadio(el, groupId) {
+      document.querySelectorAll(`#${groupId} .radio-pill`).forEach(p => p.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input').checked = true;
+    }
+
+    function getRadioValue(name) {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : '';
+    }
+
+    function showMsg(msg, type) {
+      const t = document.getElementById('formMsg');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+    }
+
+    async function submitForm() {
+      const fullName = document.getElementById('fullName').value.trim();
+      const dob      = document.getElementById('dob').value;
+      const gender   = getRadioValue('gender');
+      const phone    = document.getElementById('phone').value.trim();
+      const email    = document.getElementById('email').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const tenth    = document.getElementById('tenth').value;
+      const twelfth  = document.getElementById('twelfth').value;
+      const branch   = document.getElementById('branch').value;
+      const hostel   = getRadioValue('hostel');
+
+      if (!fullName || !dob || !gender || !phone || !email || !location || !tenth || !twelfth || !branch || !hostel) {
+        showMsg('⚠️ Please fill all fields before submitting.', 'error');
+        return;
+      }
+      if (phone.length !== 10 || isNaN(phone)) {
+        showMsg('⚠️ Enter a valid 10-digit phone number.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      document.getElementById('submitSpinner').style.display = 'inline-block';
+      document.getElementById('submitText').textContent = 'Submitting…';
+      btn.disabled = true;
+
+      try {
+        const res  = await fetch('http://localhost:5000/submit_admission', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: fullName, dob, gender,
+            personal_email: email, phone, location,
+            tenth_pct: parseFloat(tenth), twelfth_pct: parseFloat(twelfth),
+            preferred_branch: branch, hostel_required: hostel
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('formSection').style.display = 'none';
+          document.getElementById('appIdDisplay').textContent = '#' + data.application_id;
+          document.getElementById('successScreen').style.display = 'block';
+          document.getElementById('step2').classList.add('done');
+        } else {
+          showMsg('❌ ' + (data.error || 'Submission failed.'), 'error');
+          btn.disabled = false;
+        }
+      } catch {
+        showMsg('⚠️ Cannot connect to server. Make sure Flask is running.', 'error');
+        btn.disabled = false;
+      } finally {
+        document.getElementById('submitSpinner').style.display = 'none';
+        document.getElementById('submitText').textContent = 'Submit Application →';
+      }
+    }
+  </script>
+
+</body>
+</html>

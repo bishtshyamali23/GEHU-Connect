@@ -1,263 +1,610 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Admin Dashboard - GehuConnect</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h2 { color: #1a73e8; margin: 0; }
-        .logout-btn { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .logout-btn:hover { background: #c82333; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
-        .tab-btn { padding: 10px 15px; border: 1px solid #1a73e8; background: white; color: #1a73e8; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: #1a73e8; color: white; }
-        .form-section { display: none; }
-        .form-section.active { display: block; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="text"], input[type="number"], input[type="date"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button[type="submit"] { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
-        button[type="submit"]:hover { background: #1557b0; }
-        .message { margin-top: 15px; text-align: center; font-weight: bold; min-height: 20px; }
-        .success { color: green; }
-        .error { color: red; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f4f7fa; }
-        .del-btn { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .del-btn:hover { background: #c82333; }
-        .data-tables-section { margin-top: 30px; display: none; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — GEHU Connect</title>
+  <link rel="stylesheet" href="../CSS/global.css" />
+  <style>
+    body { padding-bottom: 60px; }
+
+    /* ── Admin Header ── */
+    .admin-header-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      height: 64px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-logo-text { font-size:1.2rem; font-weight:800; }
+    .admin-logo-accent { background: linear-gradient(135deg,#ffa502,#ff6b81); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* ── Tab nav ── */
+    .tab-nav {
+      display: flex; gap: 4px; flex-wrap: wrap;
+      padding: 14px 0 0;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 28px;
+      position: sticky; top: 64px;
+      background: rgba(13,15,26,0.94);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      z-index: 10;
+    }
+    .tab-btn {
+      padding: 10px 18px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--t-fast);
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+    .tab-btn .badge-count {
+      display: inline-block;
+      background: var(--danger);
+      color: #fff;
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+
+    /* ── Form sections ── */
+    .tab-panel { display: none; animation: fadeUp 0.3s ease; }
+    .tab-panel.active { display: block; }
+
+    .panel-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-lg);
+      padding: 28px;
+      max-width: 680px;
+      box-shadow: var(--shadow-md);
+    }
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 22px;
+      color: var(--text-primary);
+    }
+    .panel-title span { color: var(--text-muted); font-size: 0.82rem; font-weight: 400; display: block; margin-top: 3px; }
+
+    /* ── Data table ── */
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 16px;
+      font-size: 0.88rem;
+      border-radius: var(--r-md);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .data-table th {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    /* ── Pending admissions ── */
+    .pending-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .pending-toolbar h3 { flex: 1; font-size: 0.95rem; font-weight: 700; }
+
+    .select-all-wrap { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; }
+    .select-all-wrap input { cursor: pointer; accent-color: var(--accent-purple); width: 15px; height: 15px; }
+
+    .pend-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: var(--r-md);
+    }
+
+    /* ── Generated credentials table ── */
+    .cred-table { margin-top: 20px; }
+    .cred-table th { background: rgba(46,213,115,0.08); color: var(--success); }
+
+    /* Fetch search row */
+    .fetch-row { display: flex; gap: 10px; margin-bottom: 18px; }
+    .fetch-row .form-input { flex: 1; }
+
+    /* Manage content */
+    #manageContent { display: none; margin-top: 24px; }
+    .manage-section-title {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--accent-cyan); margin: 24px 0 12px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-bar">
-        <h2>GehuConnect Database Admin</h2>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+  <!-- Admin Header -->
+  <header class="header">
+    <div class="admin-header-inner">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="admin-logo-text">GEHU<span class="admin-logo-accent">Admin</span></span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
     </div>
-    
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('student')">Add Student</button>
-        <button class="tab-btn" onclick="showTab('attendance')">Add Attendance</button>
-        <button class="tab-btn" onclick="showTab('assignment')">Add Assignment</button>
-        <button class="tab-btn" onclick="showTab('notice')">Add Notice</button>
-        <button class="tab-btn" onclick="showTab('manage')">Manage Student</button>
+  </header>
+
+  <div class="page-wrap">
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabBtn-pending"   onclick="switchTab('pending')">🔔 Pending Admissions <span class="badge-count" id="pendingCount">0</span></button>
+      <button class="tab-btn"       id="tabBtn-student"    onclick="switchTab('student')">➕ Add Student</button>
+      <button class="tab-btn"       id="tabBtn-attendance" onclick="switchTab('attendance')">📊 Add Attendance</button>
+      <button class="tab-btn"       id="tabBtn-assignment" onclick="switchTab('assignment')">📝 Add Assignment</button>
+      <button class="tab-btn"       id="tabBtn-notice"     onclick="switchTab('notice')">📢 Add Notice</button>
+      <button class="tab-btn"       id="tabBtn-manage"     onclick="switchTab('manage')">⚙️ Manage Student</button>
     </div>
 
-    <!-- MANAGE STUDENT FORM -->
-    <div id="manage" class="form-section">
-        <div class="form-group" style="display: flex; gap: 10px;">
-            <input type="text" id="searchId" placeholder="Enter Student ID" required />
-            <button onclick="fetchStudentData()" style="width: auto;">Fetch Student</button>
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: PENDING ADMISSIONS                               -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="panel-pending">
+      <div class="pending-toolbar">
+        <h3>📋 Pending Admission Applications</h3>
+        <button class="btn btn-ghost btn-sm" onclick="loadPending()">🔄 Refresh</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bulkCsvInput').click()" style="border: 1px dashed var(--accent-cyan); color: var(--accent-cyan);">📤 Upload CSVs</button>
+        <input type="file" id="bulkCsvInput" accept=".csv" multiple style="display: none;" onchange="handleBulkUpload(this.files)" />
+        <label class="select-all-wrap">
+          <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /> Select All
+        </label>
+        <button class="btn btn-success btn-sm" id="approveBtn" onclick="approveSelected()">✅ Approve Selected</button>
+      </div>
+
+      <div id="pendingMsg" class="toast"></div>
+
+      <div class="pend-table-wrap">
+        <table class="data-table" id="pendingTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>#</th>
+              <th>Name</th>
+              <th>Gender</th>
+              <th>Branch</th>
+              <th>10th%</th>
+              <th>12th%</th>
+              <th>Phone</th>
+              <th>Hostel</th>
+              <th>Submitted</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="pendingTbody">
+            <tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Generated credentials after approval -->
+      <div id="credSection" style="display:none;margin-top:28px;">
+        <div class="manage-section-title">✅ Auto-Generated Credentials (share with students)</div>
+        <div class="pend-table-wrap">
+          <table class="data-table cred-table" id="credTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>College Email</th>
+                <th>Default Password</th>
+                <th>Branch</th>
+                <th>Section</th>
+                <th>Hostel</th>
+                <th>Room</th>
+              </tr>
+            </thead>
+            <tbody id="credTbody"></tbody>
+          </table>
         </div>
-        <div id="fetchMsg" class="message"></div>
-        
-        <div id="manageContent" class="data-tables-section">
-            <form id="updateStudentForm" onsubmit="submitForm(event, '/api/update_student', 'updateMsg')">
-                <input type="hidden" name="old_id" id="oldId" />
-                <div class="form-group"><label>Student ID</label><input type="text" name="id" id="editId" required /></div>
-                <div class="form-group"><label>Name</label><input type="text" name="name" id="editName" required /></div>
-                <div class="form-group"><label>Branch</label><input type="text" name="branch" id="editBranch" required /></div>
-                <div class="form-group"><label>CGPA</label><input type="number" name="cgpa" id="editCgpa" step="0.1" required /></div>
-                <div class="form-group"><label>Hostel</label><input type="text" name="hostel" id="editHostel" required /></div>
-                <div class="form-group"><label>Room</label><input type="text" name="room" id="editRoom" required /></div>
-                <div class="form-group"><label>Phone</label><input type="text" name="phone" id="editPhone" required /></div>
-                <button type="submit">Save Profile Changes</button>
-                <div id="updateMsg" class="message"></div>
-            </form>
+      </div>
+    </div>
 
-            <h3 style="color: #1a73e8; margin-top: 30px;">Attendance Records</h3>
-            <table>
-                <thead><tr><th>Subject</th><th>Percentage</th><th>Action</th></tr></thead>
-                <tbody id="attendanceTbody"></tbody>
-            </table>
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: ADD STUDENT                                      -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-student">
+      <div class="panel-card">
+        <div class="panel-title">Add New Student <span>Manually add a single student to the database</span></div>
+        <form onsubmit="submitForm(event,'/add_student','studentMsg')">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Student ID</label><input type="text" name="id" class="form-input" required /></div>
+            <div class="form-group"><label class="form-label">Full Name</label><input type="text" name="name" class="form-input" required /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Branch</label>
+              <select name="branch" class="form-select" required>
+                <option value="CSE">CSE</option><option value="ECE">ECE</option>
+                <option value="ME">ME</option><option value="Civil">Civil</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">CGPA</label><input type="number" name="cgpa" class="form-input" step="0.1" min="0" max="10" required /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Hostel</label><input type="text" name="hostel" class="form-input" placeholder="e.g. Block C" required /></div>
+            <div class="form-group"><label class="form-label">Room No.</label><input type="text" name="room" class="form-input" required /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" class="form-input" required /></div>
+            <div class="form-group"><label class="form-label">Password</label><input type="text" name="password" class="form-input" placeholder="Leave blank = same as ID" /></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Add Student</button>
+          <div id="studentMsg" class="toast" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
 
-            <h3 style="color: #1a73e8; margin-top: 30px;">Assignments</h3>
-            <table>
-                <thead><tr><th>Subject</th><th>Title</th><th>Due Date</th><th>Action</th></tr></thead>
-                <tbody id="assignmentsTbody"></tbody>
-            </table>
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: ADD ATTENDANCE                                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-attendance">
+      <div class="panel-card">
+        <div class="panel-title">Add Attendance Record <span>Record subject-wise attendance for a student</span></div>
+        <form onsubmit="submitForm(event,'/add_attendance','attendanceMsg')">
+          <div class="form-group"><label class="form-label">Student ID</label><input type="text" name="student_id" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">Subject</label><input type="text" name="subject" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">Attendance Percentage (%)</label><input type="number" name="percentage" class="form-input" step="0.1" min="0" max="100" required /></div>
+          <button type="submit" class="btn btn-primary btn-full">Save Attendance</button>
+          <div id="attendanceMsg" class="toast" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: ADD ASSIGNMENT                                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-assignment">
+      <div class="panel-card">
+        <div class="panel-title">Add Assignment <span>Create a new assignment for a student</span></div>
+        <form onsubmit="submitForm(event,'/add_assignment','assignmentMsg')">
+          <div class="form-group"><label class="form-label">Student ID</label><input type="text" name="student_id" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">Subject</label><input type="text" name="subject" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">Assignment Title</label><input type="text" name="title" class="form-input" required /></div>
+          <div class="form-group"><label class="form-label">Due Date</label><input type="date" name="due_date" class="form-input" required /></div>
+          <button type="submit" class="btn btn-primary btn-full">Create Assignment</button>
+          <div id="assignmentMsg" class="toast" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: ADD NOTICE                                       -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-notice">
+      <div class="panel-card">
+        <div class="panel-title">Publish Notice <span>Post an announcement visible to all students</span></div>
+        <form onsubmit="submitForm(event,'/add_notice','noticeMsg')">
+          <div class="form-group"><label class="form-label">Notice Title</label><input type="text" name="title" class="form-input" required /></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Category</label>
+              <select name="category" class="form-select" required>
+                <option value="Academic">Academic</option>
+                <option value="Fee">Fee</option>
+                <option value="Event">Event</option>
+                <option value="Exam">Exam</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Urgency</label>
+              <select name="urgency" class="form-select" required>
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Date</label><input type="date" name="date" class="form-input" required /></div>
+          <button type="submit" class="btn btn-primary btn-full">Publish Notice</button>
+          <div id="noticeMsg" class="toast" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- TAB: MANAGE STUDENT                                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-manage">
+      <div class="panel-card" style="max-width:800px;">
+        <div class="panel-title">Manage Student <span>Search by student ID to view and edit their full profile</span></div>
+        <div class="fetch-row">
+          <input type="text" id="searchId" class="form-input" placeholder="Enter Student ID" />
+          <button class="btn btn-primary" onclick="fetchStudentData()">Search</button>
         </div>
-    </div>
+        <div id="fetchMsg" class="toast"></div>
 
-    <!-- ADD STUDENT FORM -->
-    <div id="student" class="form-section active">
-        <form id="addStudentForm" onsubmit="submitForm(event, '/add_student', 'studentMsg')">
-            <div class="form-group"><label>Student ID</label><input type="text" name="id" required /></div>
-            <div class="form-group"><label>Name</label><input type="text" name="name" required /></div>
-            <div class="form-group"><label>Branch</label><input type="text" name="branch" required /></div>
-            <div class="form-group"><label>CGPA</label><input type="number" name="cgpa" step="0.1" required /></div>
-            <div class="form-group"><label>Hostel</label><input type="text" name="hostel" required /></div>
-            <div class="form-group"><label>Room</label><input type="text" name="room" required /></div>
-            <div class="form-group"><label>Phone</label><input type="text" name="phone" required /></div>
-            <button type="submit">Add Student</button>
-        </form>
-        <div id="studentMsg" class="message"></div>
-    </div>
-
-    <!-- ADD ATTENDANCE FORM -->
-    <div id="attendance" class="form-section">
-        <form id="addAttendanceForm" onsubmit="submitForm(event, '/add_attendance', 'attendanceMsg')">
-            <div class="form-group"><label>Student ID</label><input type="text" name="student_id" required /></div>
-            <div class="form-group"><label>Subject</label><input type="text" name="subject" required /></div>
-            <div class="form-group"><label>Percentage (%)</label><input type="number" name="percentage" step="0.1" required /></div>
-            <button type="submit">Add Attendance</button>
-        </form>
-        <div id="attendanceMsg" class="message"></div>
-    </div>
-
-    <!-- ADD ASSIGNMENT FORM -->
-    <div id="assignment" class="form-section">
-        <form id="addAssignmentForm" onsubmit="submitForm(event, '/add_assignment', 'assignmentMsg')">
-            <div class="form-group"><label>Student ID</label><input type="text" name="student_id" required /></div>
-            <div class="form-group"><label>Subject</label><input type="text" name="subject" required /></div>
-            <div class="form-group"><label>Assignment Title</label><input type="text" name="title" required /></div>
-            <div class="form-group"><label>Due Date</label><input type="date" name="due_date" required /></div>
-            <button type="submit">Add Assignment</button>
-        </form>
-        <div id="assignmentMsg" class="message"></div>
-    </div>
-
-    <!-- ADD NOTICE FORM -->
-    <div id="notice" class="form-section">
-        <form id="addNoticeForm" onsubmit="submitForm(event, '/add_notice', 'noticeMsg')">
-            <div class="form-group"><label>Notice Title</label><input type="text" name="title" required /></div>
-            <div class="form-group"><label>Category</label>
-                <select name="category" required>
-                    <option value="Academic">Academic</option>
-                    <option value="Fee">Fee</option>
-                    <option value="Event">Event</option>
-                    <option value="Exam">Exam</option>
-                </select>
+        <div id="manageContent">
+          <form onsubmit="submitForm(event,'/api/update_student','updateMsg')">
+            <input type="hidden" name="old_id" id="oldId" />
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Student ID</label><input type="text" name="id" id="editId" class="form-input" required /></div>
+              <div class="form-group"><label class="form-label">Name</label><input type="text" name="name" id="editName" class="form-input" required /></div>
             </div>
-            <div class="form-group"><label>Date (YYYY-MM-DD)</label><input type="date" name="date" required /></div>
-            <div class="form-group"><label>Urgency</label>
-                <select name="urgency" required>
-                    <option value="normal">Normal</option>
-                    <option value="urgent">Urgent</option>
-                </select>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Branch</label><input type="text" name="branch" id="editBranch" class="form-input" required /></div>
+              <div class="form-group"><label class="form-label">CGPA</label><input type="number" name="cgpa" id="editCgpa" class="form-input" step="0.1" required /></div>
             </div>
-            <button type="submit">Add Notice</button>
-        </form>
-        <div id="noticeMsg" class="message"></div>
-    </div>
-</div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Hostel</label><input type="text" name="hostel" id="editHostel" class="form-input" required /></div>
+              <div class="form-group"><label class="form-label">Room</label><input type="text" name="room" id="editRoom" class="form-input" required /></div>
+            </div>
+            <div class="form-group"><label class="form-label">Phone</label><input type="text" name="phone" id="editPhone" class="form-input" required /></div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <div id="updateMsg" class="toast" style="margin-top:12px;"></div>
+          </form>
 
-<script>
-    async function logout() {
-        try {
-            await fetch('/api/admin_logout', { method: 'POST' });
-            window.location.href = '/admin_login.html';
-        } catch(e) { console.error('Logout failed'); }
+          <div class="manage-section-title">Attendance Records</div>
+          <table class="data-table"><thead><tr><th>Subject</th><th>%</th><th>Action</th></tr></thead>
+            <tbody id="attTbody"></tbody>
+          </table>
+
+          <div class="manage-section-title">Assignments</div>
+          <table class="data-table"><thead><tr><th>Subject</th><th>Title</th><th>Due Date</th><th>Action</th></tr></thead>
+            <tbody id="asgTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-wrap -->
+
+  <footer class="footer">© 2026 GEHU Connect · Administrative Panel</footer>
+
+  <script>
+    // ── Tab switching ─────────────────────────────────────────
+    function switchTab(id) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + id).classList.add('active');
+      document.getElementById('tabBtn-' + id).classList.add('active');
+      if (id === 'pending') loadPending();
     }
 
-    function showTab(tabId) {
-        document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.target.classList.add('active');
-    }
-
+    // ── Generic form submit ───────────────────────────────────
     async function submitForm(e, endpoint, msgId) {
-        e.preventDefault();
-        const msgDiv = document.getElementById(msgId);
-        msgDiv.textContent = 'Saving...';
-        msgDiv.className = 'message';
-
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-
-        // Convert number types appropriately
-        if(data.cgpa) data.cgpa = parseFloat(data.cgpa);
-        if(data.percentage) data.percentage = parseFloat(data.percentage);
-
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            
-            if (response.ok) {
-                msgDiv.textContent = result.message;
-                msgDiv.classList.add('success');
-                e.target.reset(); // clear form
-            } else {
-                msgDiv.textContent = 'Error: ' + result.error;
-                msgDiv.classList.add('error');
-            }
-        } catch (err) {
-            msgDiv.textContent = 'Failed to connect to server.';
-            msgDiv.classList.add('error');
+      e.preventDefault();
+      const msg  = document.getElementById(msgId);
+      msg.textContent = 'Saving…'; msg.className = 'toast show info';
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      if (data.cgpa)       data.cgpa       = parseFloat(data.cgpa);
+      if (data.percentage) data.percentage = parseFloat(data.percentage);
+      try {
+        const res    = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        const result = await res.json();
+        if (res.ok) {
+          msg.textContent = '✅ ' + result.message;
+          msg.className   = 'toast show success';
+          e.target.reset();
+        } else {
+          msg.textContent = '❌ ' + result.error;
+          msg.className   = 'toast show error';
         }
+      } catch {
+        msg.textContent = '⚠️ Server error.';
+        msg.className   = 'toast show error';
+      }
     }
 
-    async function fetchStudentData() {
-        const id = document.getElementById('searchId').value;
-        const msg = document.getElementById('fetchMsg');
-        const content = document.getElementById('manageContent');
-        if(!id) return;
-        
-        msg.textContent = 'Fetching...'; msg.className = 'message';
-        content.style.display = 'none';
+    // ── Pending Admissions ────────────────────────────────────
+    async function loadPending() {
+      const tbody = document.getElementById('pendingTbody');
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-muted);">Loading…</td></tr>';
+      try {
+        const res  = await fetch('/api/pending_admissions');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-        try {
-            const res = await fetch(`/api/get_student_full?id=${id}`);
-            const data = await res.json();
-            
-            if(res.ok) {
-                msg.textContent = '';
-                content.style.display = 'block';
-                
-                // Populate Profile
-                document.getElementById('oldId').value = data.student.id;
-                document.getElementById('editId').value = data.student.id;
-                document.getElementById('editName').value = data.student.name;
-                document.getElementById('editBranch').value = data.student.branch;
-                document.getElementById('editCgpa').value = data.student.cgpa;
-                document.getElementById('editHostel').value = data.student.hostel;
-                document.getElementById('editRoom').value = data.student.room;
-                document.getElementById('editPhone').value = data.student.phone;
-                
-                // Populate Attendance
-                const attBody = document.getElementById('attendanceTbody');
-                attBody.innerHTML = '';
-                data.attendance.forEach(a => {
-                    attBody.innerHTML += `<tr><td>${a.subject}</td><td>${a.percentage}%</td><td><button class="del-btn" onclick="deleteRecord('attendance', ${a.id})">❌</button></td></tr>`;
-                });
-                
-                // Populate Assignments
-                const assBody = document.getElementById('assignmentsTbody');
-                assBody.innerHTML = '';
-                data.assignments.forEach(a => {
-                    assBody.innerHTML += `<tr><td>${a.subject}</td><td>${a.title}</td><td>${a.due_date}</td><td><button class="del-btn" onclick="deleteRecord('assignments', ${a.id})">❌</button></td></tr>`;
-                });
-            } else {
-                msg.textContent = data.error; msg.classList.add('error');
-            }
-        } catch(e) {
-            msg.textContent = 'Server error'; msg.classList.add('error');
+        const pending = data.filter(r => r.status === 'pending');
+        document.getElementById('pendingCount').textContent = pending.length;
+
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);">No applications yet. Students can apply at <strong>/admission_form.html</strong></td></tr>';
+          return;
         }
+        data.forEach(r => {
+          const isPending = r.status === 'pending';
+          tbody.innerHTML += `
+            <tr>
+              <td><input type="checkbox" class="pend-check" value="${r.id}" ${isPending ? '' : 'disabled'}
+                  style="accent-color:var(--accent-purple);width:15px;height:15px;"></td>
+              <td>${r.id}</td>
+              <td>${r.full_name}</td>
+              <td>${r.gender}</td>
+              <td><span class="badge badge-info">${r.preferred_branch}</span></td>
+              <td>${r.tenth_pct}%</td>
+              <td>${r.twelfth_pct}%</td>
+              <td>${r.phone}</td>
+              <td>${r.hostel_required}</td>
+              <td style="font-size:0.78rem;">${r.submitted_at || '—'}</td>
+              <td>${isPending
+                ? '<span class="badge badge-warning">Pending</span>'
+                : '<span class="badge badge-success">Approved</span>'}</td>
+            </tr>`;
+        });
+      } catch(err) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--danger);padding:20px;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function handleBulkUpload(files) {
+      const msg = document.getElementById('pendingMsg');
+      if (!files || files.length === 0) return;
+      
+      msg.textContent = `⏳ Uploading and processing ${files.length} CSV file(s)...`;
+      msg.className = 'toast show info';
+      
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+      
+      try {
+        const res = await fetch('/api/upload_csv_bulk', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          msg.textContent = `✅ ${data.message}`;
+          msg.className = 'toast show success';
+          loadPending();
+        } else {
+          msg.textContent = `❌ ${data.error || 'Upload failed.'}`;
+          msg.className = 'toast show error';
+        }
+      } catch (err) {
+        msg.textContent = '⚠️ Server connection error during upload.';
+        msg.className = 'toast show error';
+      }
+      document.getElementById('bulkCsvInput').value = '';
+    }
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.pend-check:not(:disabled)').forEach(cb => cb.checked = checked);
+    }
+
+    async function approveSelected() {
+      const ids    = [...document.querySelectorAll('.pend-check:checked')].map(cb => parseInt(cb.value));
+      const msg    = document.getElementById('pendingMsg');
+      if (ids.length === 0) {
+        msg.textContent = '⚠️ Select at least one pending application.';
+        msg.className   = 'toast show warning';
+        return;
+      }
+      msg.textContent = `⏳ Approving ${ids.length} application(s)…`;
+      msg.className   = 'toast show info';
+      try {
+        const res  = await fetch('/api/approve_admissions', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        if (data.success) {
+          msg.textContent = `✅ Approved ${data.count} student(s)! Credentials generated below.`;
+          msg.className   = 'toast show success';
+          renderCredentials(data.approved);
+          loadPending();
+        } else {
+          msg.textContent = '❌ ' + data.error;
+          msg.className   = 'toast show error';
+        }
+      } catch {
+        msg.textContent = '⚠️ Server error.';
+        msg.className   = 'toast show error';
+      }
+    }
+
+    function renderCredentials(approved) {
+      const tbody = document.getElementById('credTbody');
+      tbody.innerHTML = '';
+      approved.forEach(s => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${s.name}</strong></td>
+            <td><code style="color:var(--accent-cyan);font-family:monospace;">${s.roll}</code></td>
+            <td style="font-size:0.82rem;">${s.college_email}</td>
+            <td><code style="color:var(--warning);font-family:monospace;">${s.password}</code></td>
+            <td>${s.branch}</td>
+            <td>${s.section}</td>
+            <td>${s.hostel}</td>
+            <td>${s.room}</td>
+          </tr>`;
+      });
+      document.getElementById('credSection').style.display = 'block';
+    }
+
+    // ── Manage Student ────────────────────────────────────────
+    async function fetchStudentData() {
+      const id      = document.getElementById('searchId').value.trim();
+      const msg     = document.getElementById('fetchMsg');
+      const content = document.getElementById('manageContent');
+      if (!id) return;
+      msg.textContent = 'Fetching…'; msg.className = 'toast show info';
+      content.style.display = 'none';
+      try {
+        const res  = await fetch(`/api/get_student_full?id=${id}`);
+        const data = await res.json();
+        if (res.ok) {
+          msg.className = 'toast';
+          content.style.display = 'block';
+          document.getElementById('oldId').value      = data.student.id;
+          document.getElementById('editId').value     = data.student.id;
+          document.getElementById('editName').value   = data.student.name;
+          document.getElementById('editBranch').value = data.student.branch;
+          document.getElementById('editCgpa').value   = data.student.cgpa;
+          document.getElementById('editHostel').value = data.student.hostel;
+          document.getElementById('editRoom').value   = data.student.room;
+          document.getElementById('editPhone').value  = data.student.phone;
+
+          const attBody = document.getElementById('attTbody');
+          attBody.innerHTML = '';
+          data.attendance.forEach(a => {
+            attBody.innerHTML += `<tr><td>${a.subject}</td><td>${a.percentage}%</td><td>
+              <button class="btn btn-danger btn-sm" onclick="deleteRecord('attendance',${a.id})">Delete</button></td></tr>`;
+          });
+          if (!data.attendance.length) attBody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);">No records.</td></tr>';
+
+          const asgBody = document.getElementById('asgTbody');
+          asgBody.innerHTML = '';
+          data.assignments.forEach(a => {
+            asgBody.innerHTML += `<tr><td>${a.subject}</td><td>${a.title}</td><td>${a.due_date}</td><td>
+              <button class="btn btn-danger btn-sm" onclick="deleteRecord('assignments',${a.id})">Delete</button></td></tr>`;
+          });
+          if (!data.assignments.length) asgBody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);">No records.</td></tr>';
+        } else {
+          msg.textContent = '❌ ' + data.error; msg.className = 'toast show error';
+        }
+      } catch {
+        msg.textContent = '⚠️ Server error.'; msg.className = 'toast show error';
+      }
     }
 
     async function deleteRecord(table, id) {
-        if(!confirm('Delete this record?')) return;
-        try {
-            const res = await fetch('/api/delete_record', {
-                method: 'POST',
-                headers:{ 'Content-Type': 'application/json' },
-                body: JSON.stringify({table, id})
-            });
-            if(res.ok) { fetchStudentData(); }
-            else { alert('Failed to delete'); }
-        } catch(e) { alert('Server error'); }
+      if (!confirm('Delete this record permanently?')) return;
+      try {
+        const res = await fetch('/api/delete_record', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ table, id })
+        });
+        if (res.ok) fetchStudentData();
+        else alert('Delete failed.');
+      } catch { alert('Server error.'); }
     }
-</script>
+
+    async function logout() {
+      await fetch('/api/admin_logout', { method: 'POST' });
+      window.location.href = '/admin_login.html';
+    }
+
+    // Load pending on page load
+    loadPending();
+  </script>
 
 </body>
 </html>
